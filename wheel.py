@@ -30,14 +30,14 @@ class Wheel:
                 self.line_segs.append(seg)
                 max_kc = max(max_kc, seg['kc'])
                 min_kc = min(min_kc, seg['kc'])
-                print str(seg)
+                #print str(seg)
             if abs(min_kc) > max_kc:
                 max_kc = min_kc
             self.ki = max_kc * 0.1
             self.iterm = 0
             self.sum_T = 0
             self.set_point(0.0)
-            print "KI: %f" % self.ki
+            #print "KI: %f" % self.ki
             pass
 
         def set_point(self, setpoint):
@@ -46,19 +46,14 @@ class Wheel:
             largest_y = 0
             smallest_s = None
             largest_s = None
-            print "Set point %f" % setpoint
             for s in self.line_segs:
-                print "Set: %f, min: %f, max: %f" % (setpoint, s['min_y'], s['max_y'])
                 if (int(s['max_y']) == int(s['min_y']) == int(setpoint)):
                     self.seg = s
-                    print "Flat seg"
                     return
                 elif (s['max_y'] > setpoint > s['min_y']):
                     self.seg = s
-                    print "Match seg"
                     return
                 else:
-                    print "Fallback seg"
                     smallest_y = min(smallest_y, s['min_y'])
                     if (smallest_y == s['min_y']):
                         smallest_s = s
@@ -78,7 +73,7 @@ class Wheel:
                 err = self.setpoint - pv
                 self.iterm = self.iterm * 0.5
                 self.iterm = (self.iterm) + (self.ki * err * since_last)
-                print "iterm: %f" % self.iterm
+                #print "iterm: %f" % self.iterm
                 out = self.prev_out + (self.seg['kc'] * err)
                 if (0.01 >= self.seg['kc'] > -0.01):
                     out = self.seg['mid_x']

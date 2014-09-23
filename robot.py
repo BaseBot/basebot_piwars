@@ -4,6 +4,8 @@ import time
 import threading
 import wheel
 from smbus import SMBus
+import joystick
+import time
 
 i2c_bus = SMBus(1)
 
@@ -80,3 +82,32 @@ def forwards(speed):
 
 def f(s):
     forwards(s)
+
+j = joystick.Joystick('/dev/input/js0', False)
+axes = { 1: 0, 0: 0 }
+
+for axis in axes.keys():
+    j.enable(joystick.TYPE_AXIS, axis, True)
+
+then = time.time()
+input_tick = 0.1
+turn_epsilon = 20
+while 1:
+    now = time.time()
+    if (now - then >= input_tick):
+        then = now
+        while (j.have_events()):
+            ev = j.get()
+            if (ev.evtype == joystick.TYPE_AXIS):
+                val = ev.val
+                if (abs(val) < 546):
+                    val = 0
+                axes[ev.axis] = val
+        speed = int(axes[1] / 546.133) * -1
+        turn = int(axes[0] / 327.68)
+        print "Speed: %i, Turn: %i" % (speed, turn)
+
+        left_wheel.set_speed(speed + (turn_epsilon * turn / 100))
+        right_wheel.set_speed(speed - (turn_epsilon * turn / 100))
+        left_wheel.tick()
+        right_wheel.tick()
