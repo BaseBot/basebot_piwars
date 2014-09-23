@@ -73,5 +73,3 @@ class Joystick:
                     self.evqueue.put(ev)
             else:
                 raise ValueError
-
-j = Joystick('/dev/input/js0', False)

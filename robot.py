@@ -5,7 +5,7 @@ import threading
 import wheel
 from smbus import SMBus
 import joystick
-import time
+import STPacketServer
 
 i2c_bus = SMBus(1)
 
@@ -70,6 +70,18 @@ tick_thread = threading.Thread(target=loop)
 tick_thread.daemon = True
 tick_thread.start()
 
+HOST, PORT = "192.168.2.2", 9000
+
+server = STPacketServer.STServer(HOST, PORT)
+ip = server.server_address
+port = server.port
+
+server_thread = threading.Thread(target=server.loop)
+server_thread.daemon = True
+server_thread.start()
+print "Server running in: {}".format(server_thread.name)
+print "IP: %s Port: %i" % (ip, port)
+
 #for i in range(900, 1850, 6):
 #    left_wheel.set_speed(i)
 #    time.sleep(1.5)
@@ -83,31 +95,16 @@ def forwards(speed):
 def f(s):
     forwards(s)
 
-j = joystick.Joystick('/dev/input/js0', False)
-axes = { 1: 0, 0: 0 }
 
-for axis in axes.keys():
-    j.enable(joystick.TYPE_AXIS, axis, True)
-
-then = time.time()
-input_tick = 0.1
-turn_epsilon = 20
 while 1:
-    now = time.time()
-    if (now - then >= input_tick):
-        then = now
-        while (j.have_events()):
-            ev = j.get()
-            if (ev.evtype == joystick.TYPE_AXIS):
-                val = ev.val
-                if (abs(val) < 546):
-                    val = 0
-                axes[ev.axis] = val
-        speed = int(axes[1] / 546.133) * -1
-        turn = int(axes[0] / 327.68)
-        print "Speed: %i, Turn: %i" % (speed, turn)
-
-        left_wheel.set_speed(speed + (turn_epsilon * turn / 100))
-        right_wheel.set_speed(speed - (turn_epsilon * turn / 100))
+    message = server.recv()
+    source = message[0]
+    packet = message[1]
+    if packet.type() == 'tcmd':
+        print str(packet)
+        left_wheel.set_speed(packet.body.left)
+        right_wheel.set_speed(packet.body.right)
         left_wheel.tick()
         right_wheel.tick()
+
+    
