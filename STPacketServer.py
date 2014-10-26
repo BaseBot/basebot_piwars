@@ -25,7 +25,7 @@ class STSession():
         self.tx_queue.put(packet)
 
     def shutdown(self):
-        self.socket.shutdown(SHUT_RDWR)
+        self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
 
     def has_tx_work(self):
@@ -99,11 +99,11 @@ class STServer():
             sesh.shutdown()
         self.sessions = {}
         self.session_sockets = {}
-        self.cmd_socket_client.shutdown(SHUT_RDWR)
+        self.cmd_socket_client.shutdown(socket.SHUT_RDWR)
         self.cmd_socket_client.close()
-        self.cmd_socket.shutdown(SHUT_RDWR)
+        self.cmd_socket.shutdown(socket.SHUT_RDWR)
         self.cmd_socket.close()
-        self.server_socket.shutdown(SHUT_RDWR)
+        self.server_socket.shutdown(socket.SHUT_RDWR)
         self.server_socket.close()
 
     def socket_to_session(self, socket):
@@ -125,10 +125,15 @@ class STServer():
             sent = self.cmd_socket_client.send('!')
 
     def recv(self):
-		return self.rx_queue.get()
+        return self.rx_queue.get()
 
     def have_packet(self):
         return not self.rx_queue.empty()
+
+    def terminate_session(self, sesh):
+        sesh.shutdown()
+        self.session_sockets.pop(sesh.socket)
+        self.sessions.pop(sesh.sessionid)
 
     def loop(self):
         while 1:
@@ -152,38 +157,45 @@ class STServer():
                     full_list)
 
             if error:
+                print "Got an error socket"
                 raise IOError
 
-            for w in to_write:
-                sesh = self.socket_to_session(w)
-                print "Send for session {}".format(sesh.sessionid)
-                sesh.do_send()
+            try:
+                for w in to_write:
+                    sesh = self.socket_to_session(w)
+                    print "Send for session {}".format(sesh.sessionid)
+                    sesh.do_send()
 
-            for r in to_read:
-                print "Socket is ready to read!"
-                if r == self.server_socket:
-                    (socket, addr) = self.server_socket.accept()
-                    print "New connection from {}".format(addr)
-                    sessionid = self.new_sessionid()
-                    new_session = STSession(socket, addr, sessionid)
-                    if (new_session):
-                        print "New session: %s" % str(sessionid)
-                        self.session_sockets[socket] = new_session
-                        self.sessions[sessionid] = new_session
+                for r in to_read:
+                    print "Socket is ready to read!"
+                    if r == self.server_socket:
+                        (socket, addr) = self.server_socket.accept()
+                        print "New connection from {}".format(addr)
+                        sessionid = self.new_sessionid()
+                        new_session = STSession(socket, addr, sessionid)
+                        if (new_session):
+                            print "New session: %s" % str(sessionid)
+                            self.session_sockets[socket] = new_session
+                            self.sessions[sessionid] = new_session
+                        else:
+                            print "Session creation failed"
+                            socket.shutdown(socket.SHUT_RDWR)
+                            socket.close()
+                    elif r == self.cmd_socket:
+                        data = r.recv(128)
+                        if not data:
+                            raise IOError
+                        print "Got {} from cmd socket".format(data)
                     else:
-                        print "Session creation failed"
-                        socket.shutdown(SHUT_RDWR)
-                        socket.close()
-                elif r == self.cmd_socket:
-                    data = r.recv(128)
-                    if not data:
-                        raise IOError
-                    print "Got {} from cmd socket".format(data)
-                else:
-                    sesh = self.socket_to_session(r)
-                    print "Receive for session {}".format(sesh.sessionid)
-                    packet = sesh.do_recv()
-                    if packet:
-                        print "Got {}".format(packet)
-                        self.rx_queue.put((sesh.sessionid, packet))
+                        sesh = self.socket_to_session(r)
+                        print "Receive for session {}".format(sesh.sessionid)
+                        packet = sesh.do_recv()
+                        if packet:
+                            print "Got {}".format(packet)
+                            self.rx_queue.put((sesh.sessionid, packet))
+            except IOError:
+                print "Operation failed on session %s. Terminating." % \
+                        str(sesh.sessionid)
+                self.terminate_session(sesh)
+
 

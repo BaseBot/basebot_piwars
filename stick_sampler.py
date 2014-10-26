@@ -6,7 +6,7 @@ import time
 import socket
 import STPacketServer
 
-host = '192.168.2.2'
+host = '192.168.0.45'
 port = 9000
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect((host, port))
@@ -23,7 +23,7 @@ input_tick = 0.1
 turn_epsilon = 20
 max_speed = 60
 divisor = 32768.0 / max_speed;
-dead_zone = 0.15
+dead_zone = 0.20
 old_left = None
 old_right = None
 while 1:
