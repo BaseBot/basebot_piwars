@@ -24,19 +24,21 @@ class Wheel:
                     seg['kc'] = 0.5 / seg['dydx']
                     #seg['ki'] = seg['kc'] * 0.5
                 except ZeroDivisionError:
-                    self.prev_out = seg['mid_x']
+                    #self.prev_out = seg['mid_x']
                     seg['kc'] = 0.0
                     #seg['ki'] = 1.0
                 self.line_segs.append(seg)
                 max_kc = max(max_kc, seg['kc'])
                 min_kc = min(min_kc, seg['kc'])
-                #print str(seg)
+                print str(seg)
             if abs(min_kc) > max_kc:
                 max_kc = min_kc
+            self.prev_out = 0
             self.ki = max_kc * 0.1
             self.iterm = 0
             self.sum_T = 0
             self.set_point(0.0)
+            self.prev_out = self.seg['mid_x']
             #print "KI: %f" % self.ki
             pass
 

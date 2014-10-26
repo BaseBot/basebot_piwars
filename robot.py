@@ -22,9 +22,9 @@ l_wheel_settings = {
     "slots": 60,
     "T": global_state["T"],
     # List of pairs of tuples, representing line segments:
-    "curves": [((1344, 1516), (-60,  0)),\
-               ((1516, 1524), (  0,  0)),\
-               ((1524, 1710), (  0, 60))],
+    "curves": [((1344, 1516), (-60,  -2)),\
+               ((1516, 1524), (  -1,  1)),\
+               ((1524, 1710), (  2, 60))],
 }
 left_wheel = wheel.Wheel(l_wheel_settings)
 global_state["wheels"]["left"] = left_wheel
@@ -35,9 +35,9 @@ r_wheel_settings = {
     "threshold": 0x60,
     "slots": 60,
     "T": global_state["T"],
-    "curves": [((1488, 1308), (-60, 0)),
-               ((1308, 1300), (0, 0)),
-               ((1300, 1128), (0, 60))],
+    "curves": [((1488, 1308), (-60, -2)),
+               ((1308, 1300), (-1, 1)),
+               ((1300, 1128), (2, 60))],
 }
 right_wheel = wheel.Wheel(r_wheel_settings)
 global_state["wheels"]["right"] = right_wheel
@@ -70,7 +70,7 @@ tick_thread = threading.Thread(target=loop)
 tick_thread.daemon = True
 tick_thread.start()
 
-HOST, PORT = "192.168.2.2", 9000
+HOST, PORT = "192.168.0.45", 9000
 
 server = STPacketServer.STServer(HOST, PORT)
 ip = server.server_address
@@ -107,4 +107,4 @@ while 1:
         left_wheel.tick()
         right_wheel.tick()
 
-    
+
