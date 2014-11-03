@@ -2,6 +2,7 @@
 # http://github.com/usedbytes/i2c_encoder
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 import ctypes
+import logging
 
 class TinyEnc:
     __debug = 0
@@ -22,13 +23,16 @@ class TinyEnc:
 
 
     def __init__(self, bus, addr):
+        tag = '%i:0x%02x' % (bus, addr)
+        self.logger = logging.getLogger('%s.%s' % \
+                (self.__class__.__name__, tag))
         self.bus = bus
         self.addr = addr
+        self.logger.info("New TinyEnc at %i:0x%2x", bus, addr)
 
     def __read(self, reg, length = 1):
         vals = self.bus.read_i2c_block_data(self.addr, reg, length)
-        if self.__debug:
-            print "Read %s: %s" % (hex(reg), vals.__str__())
+        self.logger.debug("Read %s: %s", hex(reg), vals)
         if length == 1:
             return vals[0]
         else:
@@ -41,8 +45,7 @@ class TinyEnc:
             l = data
         else:
             raise TypeError
-        if self.__debug:
-            print "Write %s: %s" % (hex(reg), l.__str__())
+        self.logger.debug("Write %s: %s", hex(reg), l)
         self.bus.write_i2c_block_data(self.addr, reg, l)
 
     def __setbits(self, reg, bits):
