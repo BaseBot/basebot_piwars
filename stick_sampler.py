@@ -1,10 +1,9 @@
 #!/usr/bin/python2
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-import Packet
 import joystick
 import time
 import socket
-import STPacketServer
+import packetcomms
 
 host = '192.168.0.45'
 port = 9000
@@ -45,6 +44,6 @@ while 1:
         if (old_left != left) or (old_right != right):
             old_left = left
             old_right = right
-            pkt = Packet.TelecommandPacket(left, right)
+            pkt = packetcomms.TelecommandPacket(left, right)
             sock.sendall(pkt.pack())
 

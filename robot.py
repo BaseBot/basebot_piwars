@@ -5,7 +5,7 @@ import threading
 import wheel
 from smbus import SMBus
 import joystick
-import STPacketServer
+import packetcomms
 
 import logging
 logging.basicConfig(filename = 'logfile.log',
@@ -78,7 +78,7 @@ tick_thread.start()
 
 HOST, PORT = "192.168.0.45", 9000
 
-server = STPacketServer.STServer(HOST, PORT)
+server = packetcomms.Server(HOST, PORT)
 ip = server.server_address
 port = server.port
 
