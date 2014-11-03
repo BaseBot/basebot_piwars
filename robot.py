@@ -7,6 +7,12 @@ from smbus import SMBus
 import joystick
 import STPacketServer
 
+import logging
+logging.basicConfig(filename = 'logfile.log',
+        format = '%(asctime)s [%(levelname).4s] %(name)s: %(message)s')
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.DEBUG)
+
 i2c_bus = SMBus(1)
 
 global_state = {
