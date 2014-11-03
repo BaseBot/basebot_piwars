@@ -1,3 +1,11 @@
+# Packet-based communications module
+# Copyright Brian Starkey <stark3y@gmail.com> 2014
+
+"""
+This module provides classes to facilitate socket-based communication using
+'packets'. The packets are simply data structures which are packed and
+unpacked using the struct module
+"""
 
 import logging
 import Queue
@@ -6,7 +14,22 @@ import socket
 import struct
 
 class Packet:
+    """
+    Base class for packets
+
+    A packet can be instantiated by providing a string representing the
+    packet header. unpack_body() can then be called to generate a specialised
+    packet instance determined by the type data in the header
+    """
     class PacketHeader:
+        """
+        Packet header class
+
+        The packet header has a fixed size, and is used to determine the type
+        of a packet, and the total size of it. A PacketHeader should only be
+        directly instantiated by subclasses of Packet. The Packet constructor
+        should be used in all other cases.
+        """
         struct = struct.Struct("!4sI")
         size = struct.size
 
@@ -61,6 +84,11 @@ class Packet:
                 str(self.body))
 
 class TextPacket(Packet):
+    """
+    A simple text packet class
+
+    This type of packet contains a single string as its data
+    """
     class Body(Packet.PacketBody):
         def __init__(self, data = ''):
             self.data = data
@@ -92,6 +120,11 @@ class SpamPacket(TextPacket):
         self.header = Packet.PacketHeader('spam', self.body.size())
 
 class ListPacket(Packet):
+    """
+    Base class for general list-type packets
+
+    List packets can be used for lists of a single data type
+    """
     type_str = 'ilst'
     class Body:
         format_char = 'i'
@@ -175,6 +208,16 @@ packet_types = {
 }
 
 class Session():
+    """
+    Session class for the Server
+
+    This keeps track of a particular client connection. The server-side
+    application should not intantiate this directly.
+
+    It may be desireable to instantiate this in a client application to get
+    access to the send/receive methods. In this case, the sessionids need to
+    be managed by the application
+    """
     def __init__(self, socket, address, sessionid):
         tag = '%s' % str(sessionid)
         self.logger = logging.getLogger('%s.%s' % \
@@ -239,6 +282,13 @@ class Session():
         return None
 
 class Server():
+    """
+    A Server class for sending and receiving packets
+
+    This class does session management and send/receive operations with client
+    Sessions. A thread should be spawned for the loop function, which will
+    handle connections forever
+    """
     def __init__(self, server_address = socket.gethostname(), port = 9001,\
             max_connections = 5):
         tag = "%s:%i" % (server_address, port)
