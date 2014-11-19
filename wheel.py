@@ -99,6 +99,8 @@ class Wheel:
         self.encoder.reset()
         self.encoder.set_led(tinyenc.LED_PULSE)
         self.old_count = 0
+        self.raw_count = 0
+        self.count = 0
         self.speed = 0
         self.servo_us = 0
         self.controller = Wheel.Controller(settings)
@@ -124,11 +126,22 @@ class Wheel:
         return min(abs(min_vel), abs(max_vel))
 
     def reset(self):
+        self.raw_count = 0
+        self.count = 0
         self.old_count = 0
         self.encoder.reset()
 
     def get_position(self):
-        return self.encoder.get_count()
+        raw_count = self.encoder.get_count()
+        diff = raw_count - self.raw_count
+        bits = self.encoder.bits
+        if diff <= -2 ** (bits - 1):
+            diff = (2 ** bits) + diff
+        elif diff > 2 ** (bits - 1):
+            diff = diff - (2 ** bits)
+        self.count = self.count + diff
+        self.raw_count = raw_count
+        return self.count
 
     def tick(self):
         now = time.time()

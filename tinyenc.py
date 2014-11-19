@@ -28,6 +28,7 @@ class TinyEnc:
                 (self.__class__.__name__, tag))
         self.bus = bus
         self.addr = addr
+        self.bits = 16
         self.logger.info("New TinyEnc at %i:0x%2x", bus, addr)
 
     def __read(self, reg, length = 1):
