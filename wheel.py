@@ -118,6 +118,11 @@ class Wheel:
         #self.servo_us = speed
         #self.servo.set_us(speed)
 
+    def max_speed(self):
+        min_vel = min([s['min_y'] for s in self.controller.line_segs])
+        max_vel = min([s['max_y'] for s in self.controller.line_segs])
+        return min(abs(min_vel), abs(max_vel))
+
     def reset(self):
         self.old_count = 0
         self.encoder.reset()
