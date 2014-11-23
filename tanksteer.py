@@ -1,33 +1,37 @@
 import math
 import threading
+import smbus
+import time
 
 import wheel
 
+bus = smbus.SMBus(1)
+
 settings = {
-    'tau': 0.1,
-    'chassis_width': 200.0,
-    'wheel_diameter': 69.0,
+    'tau': 0.05,
+    'chassis_width': 159.5,
+    'wheel_diameter': 70.0,
     'speed_limiter': 0.8,
     'wheel_settings': {
         'left': {
-            'bus': ('i2c', 1),
+            'i2c_bus': bus,
             'addr': 0x41,
             'servo': 0,
             'threshold': 0x60,
             'slots': 60,
-            'curves': [((1413, 1470), (-100,  -2)),\
-                       ((1471, 1479), (  -1,  1)),\
-                       ((1480, 1536), (  2, 100))],
+            'curves': [((1413, 1470), (-100,  -1)),\
+                       ((1471, 1479), (  0,  0)),\
+                       ((1480, 1536), (  1, 100))],
         },
         'right': {
-            'bus': ('i2c', 1),
+            'i2c_bus': bus,
             'addr': 0x40,
             'servo': 1,
             'threshold': 0x60,
             'slots': 60,
-            'curves': [((1540, 1480), (-100, -2)),
-                       ((1479, 1471), (-1, 1)),
-                       ((1471, 1407), (2, 100))],
+            'curves': [((1540, 1480), (-100, -1)),
+                       ((1479, 1471), (0, 0)),
+                       ((1471, 1407), (1, 100))],
         },
     },
 }
@@ -36,29 +40,31 @@ class Tanksteer:
     def __init__(self, settings):
         self.b = settings['chassis_width']
         self.tau = settings['tau']
-        self.slots_per_mm = settings['wheel_diameter'] * math.pi / \
-                settings['wheel_settings']['left']['slots']
+        self.slots_per_mm = settings['wheel_settings']['left']['slots'] / \
+                (settings['wheel_diameter'] * math.pi)
 
         # Instantiate our wheels
-        self.wheels = (wheel.Wheel(settings['wheel_settings']['left'],
+        self.wheels = (wheel.Wheel(settings['wheel_settings']['left']),
                        wheel.Wheel(settings['wheel_settings']['right']))
         self.odometer = (0, 0)
         self.target = (0, 0)
-        self.speed = (0, 0)
+        self.cur_speed = (0, 0)
         self.update((0, 0), (0, 0))
 
         # Set up speeds
         self.max_speed = settings['speed_limiter'] * \
-                min([w.max_speed() for w in self.wheels.values()])
+                min([w.max_speed() for w in self.wheels])
+        print "Max speed: {}".format(self.max_speed)
         # Some conservative default
-        self.default_speed = 0.5 * self.max_speed
+        #self.default_speed = 0.5 * self.max_speed
+        self.default_speed = 20
 
         # Spawn a thread to tick the wheels
         self.tick_thread = threading.Thread(target=self.__loop)
         self.tick_thread.daemon = True
         self.tick_thread.start()
 
-    def __loop():
+    def __loop(self):
         next_time = time.time() + self.tau
         while 1:
             time_now = time.time()
@@ -67,8 +73,8 @@ class Tanksteer:
                 self.tick()
                 for i in range(len(self.wheels)):
                     d = self.odometer[i] - self.target[i]
-                    if ((self.speed[i] > 0) and (d >= 0)) or \
-                            (self.speed[i] < 0) and (d <= 0)):
+                    if ((self.cur_speed[i] > 0) and (d >= 0)) or \
+                            ((self.cur_speed[i] < 0) and (d <= 0)):
                         self.stop()
                         break
 
@@ -78,13 +84,24 @@ class Tanksteer:
     def tick(self):
         self.wheels[0].tick()
         self.wheels[1].tick()
+        if (self.cur_speed[0] != 0) or (self.cur_speed[1] != 0):
+            actual = (self.wheels[0].speed, self.wheels[1].speed)
+            error = (self.cur_speed[0] - actual[0], self.cur_speed[1] - actual[1])
+            print "set: (%2.2f, %2.2f) actual: (%2.2f, %2.2f) error: (%2.2f, %2.2f)" % (
+                    self.cur_speed[0], self.cur_speed[1],
+                    actual[0], actual[1], error[0], error[1])
         self.odometer = (self.wheels[0].count, self.wheels[1].count)
 
     def update(self, speed, distance):
-        self.speed = speed
+        self.cur_speed = speed
+        self.wheels[0].set_speed(self.cur_speed[0])
+        self.wheels[1].set_speed(self.cur_speed[1])
         self.tick()
         self.target = (self.odometer[0] + distance[0],
                        self.odometer[1] + distance[1])
+        print "Odo: {}".format(self.odometer)
+        print "Distance: {}".format(distance)
+        print "Target: {}".format(self.target)
 
     def mm_to_slots(self, mm):
         return mm * self.slots_per_mm

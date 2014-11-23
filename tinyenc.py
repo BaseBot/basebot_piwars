@@ -23,7 +23,7 @@ class TinyEnc:
 
 
     def __init__(self, bus, addr):
-        tag = '%i:0x%02x' % (bus, addr)
+        tag = '%i:0x%02x' % (1, addr)
         self.logger = logging.getLogger('%s.%s' % \
                 (self.__class__.__name__, tag))
         self.bus = bus
