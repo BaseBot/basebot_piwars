@@ -16,16 +16,16 @@ class Localiser:
         distance_moved = (odometer[0] - self.last[0], \
                 odometer[1] - self.last[1])
         # TODO: Improve the fuzzyness here
-        if (abs(distance_moved[0] - distance_moved[1]) < 
+        if (abs(distance_moved[0] - distance_moved[1]) <=
                 (0.05 * abs(distance_moved[0] + distance_moved[1]))):
             delta_theta = 0.0
-            delta_s = (-distance_moved[1] * math.sin(self.theta), \
-                       distance_moved[1] * math.cos(self.theta))
+            delta_s = (distance_moved[1] * math.cos(self.theta), \
+                       distance_moved[1] * math.sin(self.theta))
         else:
             turn_r = (self.b / 2) * ((distance_moved[1] + distance_moved[0]) / \
                     (distance_moved[1] - distance_moved[0]))
             delta_theta = (distance_moved[1] - distance_moved[0]) / self.b
-            delta_x = -turn_r * \
+            delta_x = turn_r * \
                     (math.sin(delta_theta + self.theta) - math.sin(self.theta))
             delta_y = -turn_r * \
                     (math.cos(delta_theta + self.theta) - math.cos(self.theta))
