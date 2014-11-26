@@ -57,3 +57,15 @@ settings = {
 }
 
 robo = classrobot.Robot(settings)
+
+def square():
+    global robo
+    wp = { 'position': (0, 1000), 'heading': math.pi / 2 }
+    robo.task.add_waypoint(wp)
+    wp = { 'position': (1000, 1000), 'heading': 0.0 }
+    robo.task.add_waypoint(wp)
+    wp = { 'position': (1000, 0), 'heading': -math.pi / 2 }
+    robo.task.add_waypoint(wp)
+    wp = { 'position': (0, 0), 'heading': math.pi }
+    robo.task.add_waypoint(wp)
+    robo.loop()
