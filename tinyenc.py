@@ -29,7 +29,7 @@ class TinyEnc:
         self.bus = bus
         self.addr = addr
         self.bits = 16
-        self.logger.info("New TinyEnc at %i:0x%2x", bus, addr)
+        self.logger.info("New TinyEnc at %i:0x%2x", 1, addr)
 
     def __read(self, reg, length = 1):
         vals = self.bus.read_i2c_block_data(self.addr, reg, length)
