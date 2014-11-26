@@ -15,7 +15,11 @@ class Robot():
 
         self.tau = settings['tau']
 
-        self.server = packetcomms.Server(port = settings['port'])
+        chassis_t = settings['platform']['chassis']
+        self.chassis = chassis_t(settings['chassis_settings'])
+
+        server_settings = settings['server_settings']
+        self.server = packetcomms.Server(port = server_settings['port'])
         self.server_thread = threading.Thread(target = self.server.loop)
         self.server_thread.daemon = True
         self.server_thread.start()
@@ -26,36 +30,18 @@ class Robot():
         self.task = None
         self.sensors = []
 
-    # Read all sensors. Returns dict of sensor readings. The following
-    # 'sensors' are guaranteed to exist:
-    # {
-    #   'heading': heading_in_degrees,
-    #   'speed': current_straight_line_speed (mm/s),
-    #   'x_pos': cartesian_x_coord (mm),
-    #   'y_pos': cartesian_y_coord (mm),
-    # }
-    # Other sensors may exist depending on the robot...
     def sense(self, time_now):
         readings = {
-            'heading': 0.0,
-            'speed': 0.0,
-            'x_pos': 0.0,
-            'y_pos': 0.0,
+            'heading': self.chassis.heading(),
+            'position': self.chassis.position(),
         }
-        # Figure out our world state
-        # readings = self.localise(time_now)
 
-        # Figure out everything else
-        for s in self.sensors:
-            readings[s.name] = s.read(time_now)
+        self.logger.debug("Sense: x:%f y:%f theta:%f",
+                readings['position'][0], readings['position'][1],
+                readings['heading'])
 
         return readings
 
-    # Decide commands for actuators. Must return a dict of tuples:
-    # { 'actuator_name': (function, [arguments])}
-    # This ensures that every actuator ends up with a single command
-    # readings is a ductionary of sensor readings, as returned by
-    # 'sense'
     def plan(self, readings):
         # Default states:
         actions = {
@@ -65,15 +51,14 @@ class Robot():
 
         # Task planning. Should not depend on any previous state
         if self.task:
-            task_actions = self.task.plan(self, readings)
-            actions.update(task_actions)
-            pass
+            actions = self.task.plan(readings)
+            #actions.update(task_actions)
 
         # Commands over the wire should override task activities
-        while self.server.have_packet():
-            msg = self.server.recv()
-            cmd_actions = self.handle_message(msg)
-            actions.update(cmd_actions)
+        #while self.server.have_packet():
+        #    msg = self.server.recv()
+        #    cmd_actions = self.handle_message(msg)
+        #    actions.update(cmd_actions)
 
         return actions
 
@@ -81,10 +66,15 @@ class Robot():
     # actions to perform, as returned by 'plan'
     # { 'actuator_name': (function, [arguments])}
     def act(self, actions):
-        for action in actions:
-            function = action[0]
-            args = action[1]
-            function(*args)
+        if not self.chassis.auto:
+            print "Mutley! do {}".format(actions)
+            if abs(actions['d_theta']) > math.pi / 16:
+                speed = None
+                if (abs(actions['d_theta']) < math.pi / 6):
+                    speed = 0.1
+                self.chassis.turn_rad(0, actions['d_theta'])
+            elif abs(actions['distance']):
+                self.chassis.line(min(actions['distance'] * 0.7, 200))
 
     # Loop forever, sensing, planning and acting!
     def loop(self):
