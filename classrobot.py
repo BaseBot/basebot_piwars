@@ -7,6 +7,7 @@ import smbus
 import time
 import threading
 
+import linetask
 import packetcomms
 
 class WaypointTask():
@@ -69,7 +70,6 @@ class WaypointTask():
             else:
                 vector = self.distance(readings)
                 distance = math.sqrt(vector[0] ** 2 + vector[1] ** 2)
-                print "sqrt: {}".format(distance)
                 if (distance > self.arrived_radius):
                     vector_angle = math.atan2(vector[1], vector[0])
                     d_theta = vector_angle - readings['heading']
@@ -102,8 +102,9 @@ class Robot():
         self.logger.info("Server loop running in: '%s'", \
                 self.server_thread.name)
 
-        self.task = WaypointTask()
-        self.sensors = []
+        #self.task = WaypointTask()
+        self.task = linetask.LineFollowerTask()
+        self.sensors = settings['sensors']
 
     def sense(self, time_now):
         readings = {
@@ -114,6 +115,8 @@ class Robot():
         self.logger.debug("Sense: x:%f y:%f theta:%f",
                 readings['position'][0], readings['position'][1],
                 readings['heading'])
+        for (name, sensor) in self.sensors.iteritems():
+            readings[name] = sensor.sense()
 
         return readings
 
@@ -134,6 +137,7 @@ class Robot():
         #    msg = self.server.recv()
         #    cmd_actions = self.handle_message(msg)
         #    actions.update(cmd_actions)
+        print actions
 
         return actions
 
@@ -141,7 +145,15 @@ class Robot():
     # actions to perform, as returned by 'plan'
     # { 'actuator_name': (function, [arguments])}
     def act(self, actions):
-        if not self.chassis.auto:
+        # Manual should override everything!
+        if actions.has_key('manual'):
+            manual = actions['manual']
+            left = math.copysign(self.chassis.speed(abs(manual[0])), manual[0])
+            right = math.copysign(self.chassis.speed(abs(manual[1])), manual[1])
+            speeds = (left, right)
+            self.chassis.update(speeds)
+        # Otherwise do auto commands if we aren't already busy
+        elif not self.chassis.auto:
             print "Mutley! do {}".format(actions)
             if abs(actions['d_theta']) > math.pi / 16:
                 speed = None

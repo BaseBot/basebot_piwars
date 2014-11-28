@@ -6,6 +6,7 @@ import smbus
 import threading
 
 import classrobot
+import linesensor
 import tanksteer
 
 logging.basicConfig(filename = 'logfile.log',
@@ -54,6 +55,9 @@ settings = {
             },
         },
     },
+    'sensors': {
+        'LineSensor': linesensor.LineSensor(i2c_bus, 0x10),
+    }
 }
 
 robo = classrobot.Robot(settings)
