@@ -89,8 +89,8 @@ class Tanksteer:
                 min([w.max_speed() for w in self.wheels])
         self.logger.info("Max speed: {}".format(self.max_speed))
         # Some conservative default
-        #self.default_speed = 0.5 * self.max_speed
-        self.default_speed = 50
+        self.default_speed = 0.5 * self.max_speed
+        #self.default_speed = 10
 
         # Spawn a thread to tick the wheels
         self.tick_thread = threading.Thread(target=self.__loop)
