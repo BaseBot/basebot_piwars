@@ -174,7 +174,7 @@ class Robot():
                     readings = self.sense(time_now)
                     actions = self.plan(readings)
                     self.act(actions)
-            except KeyboardInterrupt:
-                self.logger.critical("Caught KeyboardInterrupt. Aborting")
+            except:
+                self.chassis.stop()
                 return
 

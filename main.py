@@ -73,3 +73,6 @@ def square():
     wp = { 'position': (0, 0), 'heading': math.pi }
     robo.task.add_waypoint(wp)
     robo.loop()
+
+def stop():
+    robo.chassis.stop()
