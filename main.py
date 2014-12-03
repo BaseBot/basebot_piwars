@@ -2,6 +2,7 @@
 
 import logging
 import math
+import os
 import smbus
 import threading
 
@@ -9,18 +10,40 @@ import classrobot
 import linesensor
 import tanksteer
 
-logging.basicConfig(filename = 'logfile.log',
-        format = '%(asctime)s [%(levelname).4s] %(name)s: %(message)s')
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.DEBUG)
+def initLogging(settings):
+    formatter = logging.Formatter(\
+            '%(asctime)s [%(levelname).4s] %(name)s: %(message)s')
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.DEBUG)
+
+    file_handler = logging.FileHandler(
+            settings['logging_settings']['file'])
+    file_handler.setFormatter(formatter)
+    root_logger.addHandler(file_handler)
+
+    # If possible, open a fifo logger at a lower verbosity for realtime status
+    if settings['logging_settings'].has_key('fifo'):
+        try:
+            fd = os.open(settings['logging_settings']['fifo'],\
+                    os.O_WRONLY | os.O_NONBLOCK)
+            f = os.fdopen(fd, 'w')
+            fifo_handler = logging.StreamHandler(f)
+            fifo_handler.setLevel(logging.INFO)
+            fifo_handler.setFormatter(formatter)
+            root_logger.addHandler(fifo_handler)
+        except Exception as e:
+            root_logger.warning("Couldn't open fifo: {}".format(e))
 
 i2c_bus = smbus.SMBus(1)
-
 settings = {
     'tau': 0.1,
     'platform': {
         'chassis': tanksteer.Tanksteer,
         # TODO: Describe buses here
+    },
+    'logging_settings': {
+        'fifo': 'logfifo',
+        'file': 'logfile.log',
     },
     'server_settings': {
         'host': "192.168.0.21",
@@ -60,6 +83,7 @@ settings = {
     }
 }
 
+initLogging(settings)
 robo = classrobot.Robot(settings)
 
 def square():
