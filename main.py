@@ -8,8 +8,10 @@ import threading
 
 import classrobot
 import linesensor
+import linetask
 import serialsocket
 import tanksteer
+import waypointtask
 
 def initLogging(settings):
     formatter = logging.Formatter(\
@@ -100,8 +102,10 @@ if settings['serial_settings']['enable']:
     logging.info("Serial socket running in thread {}".format(serial_thread))
 
 
+# Task function "macros"
 def square():
     global robo
+    robo.task = waypointtask.WaypointTask()
     wp = { 'position': (0, 1000), 'heading': math.pi / 2 }
     robo.task.add_waypoint(wp)
     wp = { 'position': (1000, 1000), 'heading': 0.0 }
@@ -110,6 +114,22 @@ def square():
     robo.task.add_waypoint(wp)
     wp = { 'position': (0, 0), 'heading': math.pi }
     robo.task.add_waypoint(wp)
+    robo.loop()
+
+def tpt():
+    global robo
+    robo.task = waypointtask.WaypointTask()
+    robo.chassis.max_speed = 50
+    waypoints = [
+        { 'position': (0, 1495), 'heading': math.pi / 2 },
+        { 'position': (-800, 1495), 'heading': math.pi },
+        { 'position': (800, 1495), 'heading': math.pi,\
+            'approach_backwards': True },
+        { 'position': (0, 1495), 'heading': math.pi },
+        #FIXME: Have to bodge the endpoint a bit...
+        { 'position': (200, 0), 'heading': -math.pi / 2 },
+    ]
+    [robo.task.add_waypoint(wp) for wp in waypoints]
     robo.loop()
 
 def stop():
