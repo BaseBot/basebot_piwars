@@ -10,6 +10,7 @@ class Tanksteer:
     class Localiser:
         def __init__(self, b, odometer):
             self.logger = logging.getLogger(self.__class__.__name__)
+            self.logger.setLevel(logging.WARNING)
             self.logger.info("Localiser init")
             self.b = b
             self.reset(odometer)
@@ -155,13 +156,10 @@ class Tanksteer:
         return (1 / self.slots_per_mm) * slots
 
     def speed(self, speed):
-        print "Input speed: {}".format(speed)
         if speed == None:
             return self.default_speed
         speed = max(min(1.0, speed), 0.0)
-        print "Clamped speed: {}".format(speed)
         speed = self.max_speed * speed
-        print "Output speed: {}".format(speed)
         return speed
 
     def turn_deg(self, radius, angle, speed = None):
