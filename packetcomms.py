@@ -175,7 +175,7 @@ class DblListPacket(ListPacket):
 class TelecommandPacket(Packet):
     class Body:
         def __init__(self, left = 0, right = 0):
-            format_str = '!ii'
+            format_str = '!ff'
             self.struct = struct.Struct(format_str)
             self.left = left
             self.right = right
@@ -190,7 +190,7 @@ class TelecommandPacket(Packet):
 			self.left, self.right = self.struct.unpack(data)
 
         def __str__(self):
-			return "Left: %i, Right: %i" % (self.left, self.right)
+			return "Left: %f, Right: %f" % (self.left, self.right)
 
     def __init__(self, left = 0, right = 0):
         self.body = self.Body(left, right)

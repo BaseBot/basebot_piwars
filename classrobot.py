@@ -95,7 +95,9 @@ class Robot():
         self.chassis = chassis_t(settings['chassis_settings'])
 
         server_settings = settings['server_settings']
-        self.server = packetcomms.Server(port = server_settings['port'])
+        self.server = packetcomms.Server(server_address =
+                server_settings['host'],\
+                port = server_settings['port'])
         self.server_thread = threading.Thread(target = self.server.loop)
         self.server_thread.daemon = True
         self.server_thread.start()
@@ -104,6 +106,7 @@ class Robot():
 
         #self.task = WaypointTask()
         self.task = linetask.LineFollowerTask()
+        self.old_task = None
         self.sensors = settings['sensors']
 
     def sense(self, time_now):
@@ -120,6 +123,16 @@ class Robot():
 
         return readings
 
+    def handle_message(self, message):
+        packet = message[1]
+        if packet.type() == 'tcmd':
+            return { 'manual': (packet.body.left, packet.body.right) }
+        elif packet.type() == 'text':
+            if packet.body.data == 'resume':
+                return { 'resume': True }
+        else:
+            return {}
+
     def plan(self, readings):
         # Default states:
         actions = {
@@ -133,11 +146,16 @@ class Robot():
             #actions.update(task_actions)
 
         # Commands over the wire should override task activities
-        #while self.server.have_packet():
-        #    msg = self.server.recv()
-        #    cmd_actions = self.handle_message(msg)
-        #    actions.update(cmd_actions)
-        print actions
+        while self.server.have_packet():
+            msg = self.server.recv()
+            cmd_actions = self.handle_message(msg)
+            if cmd_actions.has_key('manual'):
+                if self.task:
+                    self.old_task = self.task
+                    self.task = None
+                actions['manual'] = cmd_actions['manual']
+            if cmd_actions.has_key('resume'):
+                self.task = self.old_task
 
         return actions
 
