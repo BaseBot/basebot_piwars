@@ -347,10 +347,10 @@ class Server():
     def send(self, (sessionid, packet)):
         if sessionid:
             self.logger.debug("Send '%s' packet to session '%s'",
-                    packet.type_str, str(sessionid))
+                    packet.type(), str(sessionid))
             self.sessions[sessionid].enqueue(packet)
         else:
-            self.logger.debug("Broadcast send '%s' packet", packet.type_str)
+            self.logger.debug("Broadcast send '%s' packet", packet.type())
             for sesh in self.sessions.values():
                 sesh.enqueue(packet)
         sent = 0
