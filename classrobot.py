@@ -37,6 +37,7 @@ class Robot():
         readings = {
             'heading': self.chassis.heading(),
             'position': self.chassis.position(),
+            'auto': self.chassis.auto,
         }
 
         self.logger.debug("Sense: x:%f y:%f theta:%f",
@@ -58,16 +59,13 @@ class Robot():
             return {}
 
     def plan(self, readings):
-        # Default states:
         actions = {
-            #'left_wheel': (self.left_wheel.set_speed, 0.0),
-            #'right_wheel': (self.right_wheel.set_speed, 0.0),
         }
 
         # Task planning. Should not depend on any previous state
         if self.task:
-            actions = self.task.plan(readings)
-            #actions.update(task_actions)
+            task_actions = self.task.plan(readings)
+            actions.update(task_actions)
 
         # Commands over the wire should override task activities
         while self.server.have_packet():
@@ -83,27 +81,30 @@ class Robot():
 
         return actions
 
-    # Set the state of the actuators. actions is a dict of tuples of the
-    # actions to perform, as returned by 'plan'
-    # { 'actuator_name': (function, [arguments])}
     def act(self, actions):
         # Manual should override everything!
         if actions.has_key('manual'):
             manual = actions['manual']
-            left = math.copysign(self.chassis.speed(abs(manual[0])), manual[0])
-            right = math.copysign(self.chassis.speed(abs(manual[1])), manual[1])
+            left = math.copysign(self.chassis.speed(abs(manual[0])),\
+                    manual[0])
+            right = math.copysign(self.chassis.speed(abs(manual[1])),\
+                    manual[1])
             speeds = (left, right)
             self.chassis.update(speeds)
         # Otherwise do auto commands if we aren't already busy
         elif not self.chassis.auto:
-            print "Mutley! do {}".format(actions)
-            if abs(actions['d_theta']) > math.pi / 16:
+            self.logger.debug("Auto: {}".format(actions))
+            if actions.has_key('d_theta') and \
+                    abs(actions['d_theta']) > math.pi / 16:
                 speed = None
                 if (abs(actions['d_theta']) < math.pi / 6):
                     speed = 0.1
                 self.chassis.turn_rad(0, actions['d_theta'])
-            elif abs(actions['distance']):
-                self.chassis.line(min(actions['distance'] * 0.7, 200))
+            elif actions.has_key('distance') and abs(actions['distance']):
+                self.chassis.line(min(actions['distance'] * 0.7, 400))
+            elif actions.has_key('arc'):
+                arc = actions['arc']
+                self.chassis.turn_rad(arc['radius'], arc['angle'])
 
     # Loop forever, sensing, planning and acting!
     def loop(self):
@@ -118,5 +119,5 @@ class Robot():
                     self.act(actions)
             except:
                 self.chassis.stop()
-                return
+                raise
 

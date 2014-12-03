@@ -26,6 +26,7 @@ class TinyEnc:
         tag = '%i:0x%02x' % (1, addr)
         self.logger = logging.getLogger('%s.%s' % \
                 (self.__class__.__name__, tag))
+        self.logger.setLevel(logging.WARNING)
         self.bus = bus
         self.addr = addr
         self.bits = 16
