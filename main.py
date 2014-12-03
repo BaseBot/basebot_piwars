@@ -132,5 +132,13 @@ def tpt():
     [robo.task.add_waypoint(wp) for wp in waypoints]
     robo.loop()
 
+def linefollow():
+    global robo
+    robo.task = linetask.LineFollowerTask()
+    robo.chassis.max_speed = 70
+    logging.info("Starting sensor value: {}".format(\
+            robo.sensors['LineSensor'].read()))
+    robo.loop()
+
 def stop():
     robo.chassis.stop()
