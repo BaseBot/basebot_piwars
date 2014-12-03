@@ -4,14 +4,16 @@ import time
 
 import linesensor
 
-t = 0.3
+t = 0.5
 i = 0
 
 def do_often(func):
+    global t
     next_time = time.time() + t
     while True:
         time_now = time.time()
         if time_now >= next_time:
+            next_time = time_now + t
             func()
 
 ls = linesensor.LineSensor(smbus.SMBus(1), 0x10)
