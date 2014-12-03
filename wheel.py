@@ -21,7 +21,7 @@ class Wheel:
                 seg['dydx'] = (seg['max_y'] - seg['min_y']) / \
                         (seg['max_x'] - seg['min_x'])
                 try:
-                    seg['kc'] = 0.5 / seg['dydx']
+                    seg['kc'] = 0.65 / seg['dydx']
                     #seg['ki'] = seg['kc'] * 0.5
                 except ZeroDivisionError:
                     #self.prev_out = seg['mid_x']
@@ -70,7 +70,7 @@ class Wheel:
 
         def calculate(self, pv, tick_T):
             since_last = self.sum_T + tick_T
-            if ((self.setpoint < 1) or (since_last >= (1 / self.setpoint))):
+            if ((self.setpoint < 1) or (since_last >= (1.8 / self.setpoint))):
                 self.sum_T = 0
                 err = self.setpoint - pv
                 self.iterm = self.iterm * 0.5
@@ -122,7 +122,7 @@ class Wheel:
 
     def max_speed(self):
         min_vel = min([s['min_y'] for s in self.controller.line_segs])
-        max_vel = min([s['max_y'] for s in self.controller.line_segs])
+        max_vel = max([s['max_y'] for s in self.controller.line_segs])
         return min(abs(min_vel), abs(max_vel))
 
     def reset(self):
