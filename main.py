@@ -8,6 +8,7 @@ import threading
 
 import classrobot
 import linesensor
+import serialsocket
 import tanksteer
 
 def initLogging(settings):
@@ -49,6 +50,11 @@ settings = {
         'host': "192.168.0.21",
         'port': 9000,
     },
+    'serial_settings': {
+        'port': '/dev/ttyAMA0',
+        'baud': 115200,
+        'enable': True,
+    },
     'chassis_settings': {
         'tau': 0.08,
         'chassis_width': 160.0,
@@ -85,6 +91,14 @@ settings = {
 
 initLogging(settings)
 robo = classrobot.Robot(settings)
+# If required, start listening on the serial port
+if settings['serial_settings']['enable']:
+    serial = serialsocket.SerialSocket(settings)
+    serial_thread = threading.Thread(target=serial.loop)
+    serial_thread.daemon = True
+    serial_thread.start()
+    logging.info("Serial socket running in thread {}".format(serial_thread))
+
 
 def square():
     global robo
