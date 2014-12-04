@@ -12,6 +12,8 @@ import linetask
 import serialsocket
 import tanksteer
 import waypointtask
+import wallsensor
+import walltask
 
 def initLogging(settings):
     formatter = logging.Formatter(\
@@ -49,7 +51,7 @@ settings = {
         'file': 'logfile.log',
     },
     'server_settings': {
-        'host': "192.168.0.21",
+        'host': "10.0.1.166",
         'port': 9000,
     },
     'serial_settings': {
@@ -61,7 +63,7 @@ settings = {
         'tau': 0.08,
         'chassis_width': 160.0,
         'wheel_diameter': 69.8,
-        'speed_limiter': 0.9,
+        'speed_limiter': 1.0,
         'wheel_settings': {
             'left': {
                 # TODO: Get bus instances from platform
@@ -88,6 +90,7 @@ settings = {
     },
     'sensors': {
         'LineSensor': linesensor.LineSensor(i2c_bus, 0x10),
+        'WallSensor': wallsensor.WallSensor(i2c_bus, 0x10),
     }
 }
 
@@ -138,6 +141,11 @@ def linefollow():
     robo.chassis.max_speed = 70
     logging.info("Starting sensor value: {}".format(\
             robo.sensors['LineSensor'].read()))
+    robo.loop()
+
+def wall(thresh = 100, speed = 0.3):
+    global robo
+    robo.task = walltask.WallTask(thresh, speed)
     robo.loop()
 
 def stop():

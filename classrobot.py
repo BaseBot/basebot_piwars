@@ -37,6 +37,7 @@ class Robot():
         readings = {
             'heading': self.chassis.heading(),
             'position': self.chassis.position(),
+            'odometer': self.chassis.odometer,
             'auto': self.chassis.auto,
         }
 
@@ -97,7 +98,7 @@ class Robot():
             if actions.has_key('d_theta') and \
                     abs(actions['d_theta']) > math.pi / 16:
                 speed = None
-                if (abs(actions['d_theta']) < math.pi / 6):
+                if (abs(actions['d_theta']) < math.pi / 16):
                     speed = 0.1
                 self.chassis.turn_rad(0, actions['d_theta'])
             elif actions.has_key('distance') and abs(actions['distance']):
