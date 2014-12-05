@@ -1,0 +1,3 @@
+[submodule "PiWars"]
+	path = PiWars
+	url = git@github.com:KimSJ/PiWars.git
