@@ -7,6 +7,7 @@ import smbus
 import threading
 
 import classrobot
+import eyemanager
 import linesensor
 import linetask
 import serialsocket
@@ -91,6 +92,9 @@ settings = {
     'sensors': {
         'LineSensor': linesensor.LineSensor(i2c_bus, 0x10),
         'WallSensor': wallsensor.WallSensor(i2c_bus, 0x10),
+    },
+    'actuators': {
+        'EyeManager': eyemanager.EyeManager(),
     }
 }
 

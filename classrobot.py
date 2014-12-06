@@ -32,6 +32,7 @@ class Robot():
         self.task = None
         self.old_task = None
         self.sensors = settings['sensors']
+        self.actuators = settings['actuators']
 
     def sense(self, time_now):
         readings = {
@@ -51,13 +52,25 @@ class Robot():
 
     def handle_message(self, message):
         packet = message[1]
+        ret = {}
         if packet.type() == 'tcmd':
-            return { 'manual': (packet.body.left, packet.body.right) }
+            ret['manual'] = (packet.body.left, packet.body.right)
+        if packet.type() == 'lids':
+            cmd = ('lids', [packet.body.left, packet.body.right])
+            if not ret.has_key('eyes'):
+                ret['eyes'] = [cmd]
+            else:
+                ret['eyes'].append(cmd)
+        if packet.type() == 'look':
+            cmd = ('look', [packet.body.lr, packet.body.lr, packet.body.ud])
+            if not ret.has_key('eyes'):
+                ret['eyes'] = [cmd]
+            else:
+                ret['eyes'].append(cmd)
         elif packet.type() == 'text':
             if packet.body.data == 'resume':
-                return { 'resume': True }
-        else:
-            return {}
+                ret['resume'] = True
+        return ret
 
     def plan(self, readings):
         actions = {
@@ -79,6 +92,7 @@ class Robot():
                 actions['manual'] = cmd_actions['manual']
             if cmd_actions.has_key('resume'):
                 self.task = self.old_task
+            actions.update(cmd_actions)
 
         return actions
 
@@ -118,6 +132,8 @@ class Robot():
                     readings = self.sense(time_now)
                     actions = self.plan(readings)
                     self.act(actions)
+                    for key, a in self.actuators.iteritems():
+                        a.act(actions)
             except:
                 self.chassis.stop()
                 raise

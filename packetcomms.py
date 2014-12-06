@@ -196,6 +196,54 @@ class TelecommandPacket(Packet):
         self.body = self.Body(left, right)
         self.header = Packet.PacketHeader('tcmd', self.body.size())
 
+class EyeLookPacket(Packet):
+    class Body:
+        def __init__(self, lr = 0, ud = 0):
+            format_str = '!ff'
+            self.struct = struct.Struct(format_str)
+            self.lr = lr
+            self.ud = ud
+
+        def size(self):
+            return self.struct.size
+
+        def pack(self):
+            return self.struct.pack(self.lr, self.ud)
+
+        def unpack(self, data):
+			self.lr, self.ud = self.struct.unpack(data)
+
+        def __str__(self):
+			return "LeftRight: %f, UpDown: %f" % (self.lr, self.ud)
+
+    def __init__(self, lr = 0.5, ud = 0.5):
+        self.body = self.Body(lr, ud)
+        self.header = Packet.PacketHeader('look', self.body.size())
+
+class EyeLidPacket(Packet):
+    class Body:
+        def __init__(self, left = 0, right = 0):
+            format_str = '!ff'
+            self.struct = struct.Struct(format_str)
+            self.left = left
+            self.right = right
+
+        def size(self):
+            return self.struct.size
+
+        def pack(self):
+            return self.struct.pack(self.left, self.right)
+
+        def unpack(self, data):
+			self.left, self.right = self.struct.unpack(data)
+
+        def __str__(self):
+			return "Left: %f, Right: %f" % (self.left, self.right)
+
+    def __init__(self, left = 0, right = 0):
+        self.body = self.Body(left, right)
+        self.header = Packet.PacketHeader('lids', self.body.size())
+
 packet_types = {
  'text': TextPacket,
  'echo': EchoPacket,
@@ -205,6 +253,8 @@ packet_types = {
  'flst': FloatListPacket,
  'dlst': DblListPacket,
  'tcmd': TelecommandPacket,
+ 'look': EyeLookPacket,
+ 'lids': EyeLidPacket,
 }
 
 class Session():

@@ -7,6 +7,7 @@ class EyeManager:
     def __init__(self):
         self.eyes = PiWars.blinkyeyes.BlinkyEyes()
         self.action_queue = Queue.Queue(10)
+        self.eyes.moveLids(0.1, 0.1)
         self.action_thread = threading.Thread(target=self.loop)
         self.action_thread.daemon = True
         self.action_thread.start()
@@ -22,7 +23,6 @@ class EyeManager:
     def do(self, action):
         act = action[0]
         args = action[1]
-        print "{}".format(action)
         try:
             if act == 'look':
                 # Look needs [l, r, v]
@@ -41,7 +41,12 @@ class EyeManager:
                 self.action_queue.put(
                         (self.eyes.wink, args), False)
             else:
-                print "No such action {}".format(act)
+                pass
         except Queue.Full:
             # Queue full. Oh well!
             pass
+
+    def act(self, actions):
+        if actions.has_key('eyes'):
+            for tup in actions['eyes']:
+                self.do(tup)
