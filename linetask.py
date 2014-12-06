@@ -1,3 +1,6 @@
+# Task for following a line, based on a linesensor.LineSensor's reading
+# Copyright Brian Starkey 2014 <stark3y@gmail.com>
+
 import logging
 import math
 import random
@@ -29,16 +32,17 @@ class LineFollowerTask:
                         self.state = self.STATE_LOST
                         self.lost_step = 0
 
-                    # Only panic a little bit
+                    # Otherwise only panic a little bit
                     if self.last_seen == 0:
                         # We were going straight, pick a random direction
                         sign = random.choice([-1, 1])
                         reading = math.copysign(2, sign)
                     else:
+                        # Head back towards where the line last was seen
                         reading = math.copysign(abs(self.last_seen * 2), \
                                 self.last_seen)
                 else:
-                    # Now we need to go into full-on search mode
+                    # Now we need to go into full-on search and rescue mode
                     if readings['auto']:
                         # Wait until we finished the last bit
                         return {}
@@ -109,9 +113,12 @@ class LineFollowerTask:
                     self.lost_step = self.lost_step + 1
                     return actions
             else:
+                # Back on the line
                 self.last_seen = reading
                 self.state = self.STATE_FOLLOWING
                 self.lost_timer = 0
+
+            # Slow one wheel proportionally to how far off the line
             diff = self.default_speed * abs(reading) * 0.8
             if reading <= 0.0:
                 left = self.default_speed

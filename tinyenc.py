@@ -1,5 +1,6 @@
 # python bindings for the Attiny i2c quadrature encoder:
 # http://github.com/usedbytes/i2c_encoder
+# Copyright Brian Starkey 2014 <stark3y@gmail.com>
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 import ctypes
 import logging

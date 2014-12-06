@@ -1,4 +1,6 @@
 # Wall sensor using IR reflectance sensors
+# Same physical hardware as linesensor, different algorithm
+# Copyright Brian Starkey 2014 <stark3y@gmail.com>
 
 import logging
 import math

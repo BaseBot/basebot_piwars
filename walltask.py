@@ -1,3 +1,6 @@
+# Task for driving straight until a wall gets in the way
+# Copyright Brian Starkey 2014 <stark3y@gmail.com>
+
 import logging
 import math
 import random
@@ -19,6 +22,8 @@ class WallTask:
         wheel_moved = (readings['odometer'][0] - self.odometer[0],
                 readings['odometer'][1] - self.odometer[1])
 
+        # FIXME: At an hour's notice, this is the best way I can think of of
+        # driving a straight line
         if wheel_moved[0] > wheel_moved[1]:
             return { 'manual': (0, self.default_speed) }
         elif wheel_moved[1] > wheel_moved[0]:

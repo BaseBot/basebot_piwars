@@ -1,3 +1,5 @@
+# Differential Drive chassis with dead-reckoning
+# Copyright Brian Starkey 2014 <stark3y@gmail.com>
 import logging
 import math
 import threading
@@ -7,6 +9,7 @@ import time
 import wheel
 
 class Tanksteer:
+    # Localiser handles dead-reckoning
     class Localiser:
         def __init__(self, b, odometer):
             self.logger = logging.getLogger(self.__class__.__name__)
@@ -31,15 +34,13 @@ class Tanksteer:
             else:
                 return theta
 
+        # Calculate a new position and heading based on wheel ticks
         def update(self, odometer):
-            #now = time.time()
-            #if (now - self.last_time < 0.2):
-            #    return
-            #self.last_time = now
             distance_moved = (odometer[0] - self.last[0], \
                     odometer[1] - self.last[1])
             s = ''
 
+            # Derivation: http://rossum.sourceforge.net/papers/DiffSteer/
             # TODO: Improve the fuzzyness here
             if (distance_moved[0] == distance_moved[1]):
                     #(0.05 * abs(distance_moved[0] + distance_moved[1]))):
@@ -109,6 +110,7 @@ class Tanksteer:
                 if self.auto:
                     for i in range(len(self.wheels)):
                         d = self.odometer[i] - self.target[i]
+                        # Stop if it looks like we completed our movement
                         if ((self.cur_speed[i] > 0) and (d >= 0)) or \
                                 ((self.cur_speed[i] < 0) and (d <= 0)):
                             self.stop()
@@ -126,6 +128,7 @@ class Tanksteer:
     def tick(self):
         self.wheels[0].tick()
         self.wheels[1].tick()
+        # Verbose logging
         if (self.cur_speed[0] != 0) or (self.cur_speed[1] != 0):
             actual = (self.wheels[0].speed, self.wheels[1].speed)
             error = (self.cur_speed[0] - actual[0], \
@@ -155,6 +158,7 @@ class Tanksteer:
     def slots_to_mm(self, slots):
         return (1 / self.slots_per_mm) * slots
 
+    # Return a speed in slots/s given input 0-1.0
     def speed(self, speed):
         if speed == None:
             return self.default_speed
@@ -202,7 +206,6 @@ class Tanksteer:
         if abs(distance) > 1:
             v_r = math.copysign(self.speed(speed), distance)
             v_l = v_r
-            #distance_slots = self.mm_to_slots(distance)
             self.update((v_l, v_r), (distance, distance), True)
 
 

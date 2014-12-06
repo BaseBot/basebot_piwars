@@ -1,4 +1,8 @@
 #/usr/bin/python
+# Reads data from the serial port and forwards it on to a packetcomms.Server
+# Hopefully the data is well-formed packetcomms.Packet()s!
+# Copyright Brian Starkey 2014 <stark3y@gmail.com>
+
 import logging
 import serial
 import socket

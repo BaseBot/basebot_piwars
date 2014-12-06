@@ -1,4 +1,8 @@
 #!/usr/bin/python2
+# Very very basic uevent joystick driver. Don't know if it works with
+# anything other than xpad. Everything in here is based of a quick scan of
+# /dev/input/js0 with a hex editor.
+# Copyright Brian Starkey 2014 <stark3y@gmail.com>
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 import struct
 import collections
@@ -22,6 +26,10 @@ class Joystick:
         self.axes = {}
         format_str = '<IhBB'
         self.struct = struct.Struct(format_str)
+        # Seems like the first thing that happens is each axis gets
+        # enumerated with an event with "type" having the top bit set
+        # We will read all of these, using non-blocking IO to tell when it's
+        # done (the reads will start to fail)
         try:
             while 1:
                 s = os.read(self.fd, self.struct.size)
@@ -40,6 +48,7 @@ class Joystick:
         fcntl.fcntl(self.fd, fcntl.F_SETFL, flags)
         # Use a file object because it's nicer :-)
         self.f = os.fdopen(self.fd, 'r')
+        # Spawn a thread to pump for events
         self.poll_thread = threading.Thread(target=self.__loop)
         self.poll_thread.daemon = True
         self.poll_thread.start()
@@ -47,6 +56,7 @@ class Joystick:
         print "Enabled Buttons: %s" % str(self.buttons)
         print "Enabled Axes: %s" % str(self.axes)
 
+    # Enable a button or axis
     def enable(self, evtype, axis, enable):
         if (evtype == TYPE_BUTTON):
             self.buttons[axis] = enable

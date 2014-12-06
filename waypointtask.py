@@ -1,3 +1,5 @@
+# Task for driving between waypoints in cartesian space
+# Copyright Brian Starkey 2014 <stark3y@gmail.com>
 
 import logging
 import math
@@ -8,7 +10,9 @@ class WaypointTask():
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.info("WaypointTask init")
         self.waypoints = Queue.Queue()
+        # How close to a waypoint do we need to get?
         self.arrived_radius = 50
+        # How close does our heading have to match at a waypoint?
         self.arrived_d_theta = math.pi / 8
         self.current_waypoint = None
 
@@ -30,6 +34,7 @@ class WaypointTask():
         distance = (t_pos[0] - c_pos[0], t_pos[1] - c_pos[1])
         return distance
 
+    # Did we arrive?
     def arrived(self, readings):
         if not self.current_waypoint:
             return True
@@ -52,6 +57,7 @@ class WaypointTask():
         else:
             return theta
 
+    # Task plan routine - what's next?!
     def plan(self, readings):
         distance = 0.0
         d_theta = 0.0

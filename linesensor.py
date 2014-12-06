@@ -1,4 +1,6 @@
 # Line following sensor driver via i2c ADC
+# Reads a bunch of IR reflectance sensors and tries to find a line
+# Copyright Brian Starkey 2014 <stark3y@gmail.com>
 
 import logging
 import math

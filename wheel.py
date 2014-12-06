@@ -10,6 +10,7 @@ class Wheel:
             self.line_segs = []
             max_kc = 0
             min_kc = 0
+            # Calculate a gain for each of the straight line segments
             for l in settings["curves"]:
                 seg = {}
                 seg['min_x'] = float(l[0][0])
@@ -48,6 +49,7 @@ class Wheel:
             largest_y = 0
             smallest_s = None
             largest_s = None
+            # Find the line segment this set-point lies within
             for s in self.line_segs:
                 if (int(s['max_y']) == int(s['min_y']) == int(setpoint)):
                     self.seg = s
@@ -68,6 +70,7 @@ class Wheel:
                 self.seg = largest_s
             return
 
+        # Controller tick
         def calculate(self, pv, tick_T):
             since_last = self.sum_T + tick_T
             if ((self.setpoint < 1) or (since_last >= (1.8 / self.setpoint))):
@@ -93,7 +96,9 @@ class Wheel:
 
     def __init__(self, settings):
         self.settings = settings
+        # Instantiate servo
         self.servo = servo.Servo(settings['servo'])
+        # Instantiate encoder
         self.encoder = tinyenc.TinyEnc(settings['i2c_bus'], settings['addr'])
         self.encoder.set_thresh(settings['threshold'])
         self.encoder.reset()
@@ -131,6 +136,9 @@ class Wheel:
         self.old_count = 0
         self.encoder.reset()
 
+    # Get an absolute number of ticks, handling overflows in the encoder
+    # The encoders are 16-bit, giving 32k in each direction, which could
+    # conceivably overflow
     def get_position(self):
         raw_count = self.encoder.get_count()
         diff = raw_count - self.raw_count

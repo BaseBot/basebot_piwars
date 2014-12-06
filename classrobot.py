@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# The main robot class
+# Copyright Brian Starkey 2014 <stark3y@gmail.com>
 
 import logging
 import math
@@ -16,9 +18,11 @@ class Robot():
 
         self.tau = settings['tau']
 
+        # Set up our chassis
         chassis_t = settings['platform']['chassis']
         self.chassis = chassis_t(settings['chassis_settings'])
 
+        # Server for commands
         server_settings = settings['server_settings']
         self.server = packetcomms.Server(server_address =
                 server_settings['host'],\
@@ -34,22 +38,8 @@ class Robot():
         self.sensors = settings['sensors']
         self.actuators = settings['actuators']
 
-    def sense(self, time_now):
-        readings = {
-            'heading': self.chassis.heading(),
-            'position': self.chassis.position(),
-            'odometer': self.chassis.odometer,
-            'auto': self.chassis.auto,
-        }
-
-        self.logger.debug("Sense: x:%f y:%f theta:%f",
-                readings['position'][0], readings['position'][1],
-                readings['heading'])
-        for (name, sensor) in self.sensors.iteritems():
-            readings[name] = sensor.sense()
-
-        return readings
-
+    # Handle any packets we receive on the server.
+    # TODO: Use more generic packet types
     def handle_message(self, message):
         packet = message[1]
         ret = {}
@@ -72,6 +62,33 @@ class Robot():
                 ret['resume'] = True
         return ret
 
+
+    # Read all the sensors, update the chassis' dead-reckoning
+    # Call sense() on each sensor
+    # Return all the readings as a dict
+    def sense(self, time_now):
+        readings = {
+            'heading': self.chassis.heading(),
+            'position': self.chassis.position(),
+            'odometer': self.chassis.odometer,
+            'auto': self.chassis.auto,
+        }
+
+        self.logger.debug("Sense: x:%f y:%f theta:%f",
+                readings['position'][0], readings['position'][1],
+                readings['heading'])
+        for (name, sensor) in self.sensors.iteritems():
+            readings[name] = sensor.sense()
+
+        return readings
+
+    # Given the sensor readings, determine our next move as a dict of actions
+    # Actions are:
+    # 'd_theta': Turn a number of radians
+    # 'distance': Drive a straight line (in mm)
+    # 'arc': Drive an arc, given radius and angle in radians
+    # 'manual': Direct control of wheel speed as tuple (left, right) in mm/s
+    # Other commands determined by packets over-the-wire - see handle_message
     def plan(self, readings):
         actions = {
         }
@@ -92,6 +109,8 @@ class Robot():
                 actions['manual'] = cmd_actions['manual']
             if cmd_actions.has_key('resume'):
                 self.task = self.old_task
+            # Merge the existing actions with the ones over-the-wire
+            # Overwrites any duplicate entries
             actions.update(cmd_actions)
 
         return actions

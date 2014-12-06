@@ -1,3 +1,7 @@
+# Thin wrapper for blinkyeyes.BlinkyEyes() to integrate with the sense/plan/
+# act loop of a classrobot.Robot()
+# Copyright Brian Starkey 2014 <stark3y@gmail.com>
+
 import Queue
 import threading
 
@@ -8,6 +12,7 @@ class EyeManager:
         self.eyes = PiWars.blinkyeyes.BlinkyEyes()
         self.action_queue = Queue.Queue(10)
         self.eyes.moveLids(0.1, 0.1)
+        # Spawn a thread because some operations may sleep
         self.action_thread = threading.Thread(target=self.loop)
         self.action_thread.daemon = True
         self.action_thread.start()

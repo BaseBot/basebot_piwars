@@ -1,4 +1,7 @@
 #!/usr/bin/python2
+# Read joystick data and send it over the serial port as packetcomms.Packet()s
+# Not pretty, but functional
+# Copyright Brian Starkey 2014 <stark3y@gmail.com>
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 import joystick
 import time
@@ -20,6 +23,7 @@ except serial.SerialException, e:
     sys.exit(1)
 
 j = joystick.Joystick('/dev/input/js0', False)
+# These are the only axes we are interested in
 axes = [0, 1, 3 ,4, 2, 5]
 
 for axis in axes:
@@ -36,7 +40,7 @@ last_time = time.time()
 ev = joystick.Event(0, 0, 0, 0)
 resume = True
 
-
+# Single wrapper for pairs on analogue axes
 class ThumbStick:
     def __init__(self, axes = [0, 1], deadzone = dead_zone):
         self.axes = {}
@@ -65,6 +69,7 @@ class ThumbStick:
         y = max(self.axes.keys())
         return (self.axes[x], self.axes[y])
 
+# Left thumbstick controls movement, with TelecommandPackets
 left_thumbstick = ThumbStick([0, 1], 0.5)
 def send_tcmd(now, vals):
     global ser, last_time, resume, old_left, old_right
@@ -82,6 +87,8 @@ def send_tcmd(now, vals):
         ser.write(pkt.pack())
         resume = False
     else:
+        # If nothing happened for a while, tell the robot to resume normal
+        # task duties
         this_time = time.time()
         if left == 0 and right == 0 and (this_time - last_time) > 3 \
                 and not resume:
@@ -89,6 +96,7 @@ def send_tcmd(now, vals):
             last_time = this_time
             resume = True
 
+# The right thumbstick controls the eye position
 right_thumbstick = ThumbStick([3, 4])
 def send_eyes(now, vals):
     global ser
@@ -97,6 +105,7 @@ def send_eyes(now, vals):
     pkt = packetcomms.EyeLookPacket(x, y)
     ser.write(pkt.pack())
 
+# The triggers control the eyelid position
 triggers = ThumbStick([2, 5])
 def send_lids(now, vals):
     global ser
@@ -111,6 +120,7 @@ thumbsticks = {
     'trigger': (triggers, send_lids),
 }
 
+# Loop forever, checking for events regularly
 while 1:
     now = time.time()
     if (now - then >= input_tick):
